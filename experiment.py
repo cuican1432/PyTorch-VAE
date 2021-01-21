@@ -10,6 +10,9 @@ import torchvision.utils as vutils
 from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
 from cosmo_data import CosmoData
+import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
+from vis import plt_slices, plt_power
 
 
 class VAEXperiment(pl.LightningModule):
@@ -23,6 +26,7 @@ class VAEXperiment(pl.LightningModule):
         self.params = params
         self.curr_device = None
         self.hold_graph = False
+        self.current_step = 0
         try:
             self.hold_graph = self.params['retain_first_backpass']
         except:
@@ -42,6 +46,7 @@ class VAEXperiment(pl.LightningModule):
                                               batch_idx=batch_idx)
 
         self.logger.experiment.log({key: val.item() for key, val in train_loss.items()})
+        self.current_step += 1
 
         return train_loss
 
@@ -55,9 +60,12 @@ class VAEXperiment(pl.LightningModule):
                                             optimizer_idx=optimizer_idx,
                                             batch_idx=batch_idx)
 
+        if self.current_step % 1000 == 0:
+            self.sample_images()
+
         return val_loss
 
-    def validation_end(self, outputs):
+    def on_validation_end(self, outputs):
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         tensorboard_logs = {'avg_val_loss': avg_loss}
         self.sample_images()
@@ -69,29 +77,34 @@ class VAEXperiment(pl.LightningModule):
         test_input = test_input.to(self.curr_device)
         test_label = test_label.to(self.curr_device)
         recons = self.model.generate(test_input, labels=test_label)
-        vutils.save_image(recons.data,
+        vutils.save_image(recons.data[:24],
                           f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
-                          f"recons_{self.logger.name}_{self.current_epoch}.png",
+                          f"recons_{self.logger.name}_{self.current_epoch:04d}.png",
                           normalize=True,
                           nrow=12)
 
-        # vutils.save_image(test_input.data,
-        #                   f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
-        #                   f"real_img_{self.logger.name}_{self.current_epoch}.png",
-        #                   normalize=True,
-        #                   nrow=12)
+        vutils.save_image(test_input.data[:24],
+                          f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
+                          f"real_img_{self.logger.name}_{self.current_epoch:04d}.png",
+                          normalize=True,
+                          nrow=12)
 
-        try:
-            samples = self.model.sample(144,
-                                        self.curr_device,
-                                        labels=test_label)
-            vutils.save_image(samples.cpu().data,
-                              f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
-                              f"{self.logger.name}_{self.current_epoch}.png",
-                              normalize=True,
-                              nrow=12)
-        except:
-            pass
+        f = plt_slices(test_input.data[:6], recons.data[:6], title=['original img', 'recon'])
+        self.logger.experiment.add_figure(f'recon visuals', f, global_step=self.current_step)
+        f = plt_power(test_input.data[:6], recons.data[:6], label=['original img', 'recon'])
+        self.logger.experiment.add_figure(f'ps visuals', f, global_step=self.current_step)
+
+        # try:
+        #     samples = self.model.sample(144,
+        #                                 self.curr_device,
+        #                                 labels=test_label)
+        #     vutils.save_image(samples.cpu().data,
+        #                       f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
+        #                       f"{self.logger.name}_{self.current_epoch}.png",
+        #                       normalize=True,
+        #                       nrow=12)
+        # except:
+        #     pass
 
         del test_input, recons  # , samples
 
@@ -104,6 +117,12 @@ class VAEXperiment(pl.LightningModule):
                                lr=self.params['LR'],
                                weight_decay=self.params['weight_decay'])
         optims.append(optimizer)
+        scheduler = {'scheduler': OneCycleLR(optimizer, max_lr=self.params['LR'],
+                                             steps_per_epoch=len(self.train_dataloader()),
+                                             epochs=self.params['max_epochs'], final_div_factor=1e4),
+                     'interval': 'step'}
+        scheds.append(scheduler)
+
         # Check if more than 1 optimizer is required (Used for adversarial training)
         try:
             if self.params['LR_2'] is not None:
@@ -129,7 +148,7 @@ class VAEXperiment(pl.LightningModule):
                     pass
                 return optims, scheds
         except:
-            return optims
+            return optims, scheds
 
     @data_loader
     def train_dataloader(self):
@@ -151,6 +170,7 @@ class VAEXperiment(pl.LightningModule):
         self.num_train_imgs = len(dataset)
         return DataLoader(dataset,
                           batch_size=self.params['batch_size'],
+                          num_workers=self.params['num_workers'],
                           shuffle=True,
                           drop_last=True)
 
@@ -167,12 +187,13 @@ class VAEXperiment(pl.LightningModule):
                                                 shuffle=True,
                                                 drop_last=True)
             self.num_val_imgs = len(self.sample_dataloader)
-            
+
         # to do: create dummy dataset here
 
         elif self.params['dataset'] == 'cosmo':
             self.sample_dataloader = DataLoader(CosmoData(train='val'),
                                                 batch_size=self.params['batch_size'],
+                                                num_workers=self.params['num_workers'],
                                                 shuffle=False)
             self.num_val_imgs = len(self.sample_dataloader)
         else:

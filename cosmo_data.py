@@ -5,6 +5,7 @@ import numpy as np
 import torch.nn as nn
 import torch
 import argparse
+import random
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
@@ -12,7 +13,6 @@ from torch.utils.data import Dataset, DataLoader
 class CosmoData(Dataset):
     def __init__(self, train='train'):
         self.file_list = torch.load(f'/mnt/home/ecui/ceph/universe_vae/datasets/{train}_list.pkl')
-
     def get_norm(self, data):
         return torch.log(data + 1e-8)
 
