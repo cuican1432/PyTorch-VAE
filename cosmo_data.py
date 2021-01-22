@@ -12,7 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 
 class CosmoData(Dataset):
     def __init__(self, train='train'):
-        self.file_list = torch.load(f'/mnt/home/ecui/ceph/universe_vae/datasets/{train}_list.pkl')
+        self.file_list = torch.load(f'/mnt/home/ecui/ceph/vae_learning/dataset/{train}_list.pkl')
     def get_norm(self, data):
         return torch.log(data + 1e-8)
 
@@ -24,10 +24,10 @@ class CosmoData(Dataset):
         return data[:, y:y + height, x:x + width]
 
     def __getitem__(self, index):
-        img = self.file_list[index]['local']
+        img = self.file_list[index]['data']
         img = torch.from_numpy(np.load(img)).view(-1, 512, 512)
         img = self.get_shrink(self.get_norm(img))
-        return img, torch.randn((1, 1))
+        return img, self.file_list[index]['cosmo pharameter']
 
     def __len__(self):
         return len(self.file_list)
