@@ -36,6 +36,7 @@ class VAEXperiment(pl.LightningModule):
         return self.model(input, **kwargs)
 
     def training_step(self, batch, batch_idx, optimizer_idx=0):
+        self.current_step += 1
         real_img, labels = batch
         self.curr_device = real_img.device
 
@@ -46,7 +47,9 @@ class VAEXperiment(pl.LightningModule):
                                               batch_idx=batch_idx)
 
         self.logger.experiment.log({key: val.item() for key, val in train_loss.items()})
-        self.current_step += 1
+
+        if self.current_step % 100 == 0:
+            self.sample_images()
 
         return train_loss
 
@@ -59,9 +62,6 @@ class VAEXperiment(pl.LightningModule):
                                             M_N=self.params['batch_size'] / self.num_val_imgs,
                                             optimizer_idx=optimizer_idx,
                                             batch_idx=batch_idx)
-
-        if self.current_step % 1000 == 0:
-            self.sample_images()
 
         return val_loss
 
@@ -77,17 +77,17 @@ class VAEXperiment(pl.LightningModule):
         test_input = test_input.to(self.curr_device)
         test_label = test_label.to(self.curr_device)
         recons = self.model.generate(test_input, labels=test_label)
-        vutils.save_image(recons.data[:24],
+        vutils.save_image(recons.data[:6],
                           f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
                           f"recons_{self.logger.name}_{self.current_epoch:04d}.png",
                           normalize=True,
-                          nrow=12)
+                          nrow=6)
 
-        vutils.save_image(test_input.data[:24],
+        vutils.save_image(test_input.data[:6],
                           f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
                           f"real_img_{self.logger.name}_{self.current_epoch:04d}.png",
                           normalize=True,
-                          nrow=12)
+                          nrow=6)
 
         f = plt_slices(test_input.data[:6], recons.data[:6], title=['original img', 'recon'])
         self.logger.experiment.add_figure(f'recon visuals', f, global_step=self.current_step)
