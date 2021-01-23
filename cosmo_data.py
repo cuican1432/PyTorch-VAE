@@ -31,3 +31,15 @@ class CosmoData(Dataset):
 
     def __len__(self):
         return len(self.file_list)
+
+### Add a Dummy Dataset for test###
+class DummyData(Dataset):
+    def __init__(self):
+        pass
+    
+    def __getitem__(self, index):
+        img = torch.rand(1, 512, 512)
+        return img, torch.randn((1, 1))
+    
+    def __len__(self):
+        return 153 * 2000
