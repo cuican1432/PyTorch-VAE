@@ -1,25 +1,24 @@
 model_params:
   name: 'BetaVAE'
-  in_channels: 3
-  latent_dim: 128
+  in_channels: 1
+  latent_dim: 64
   loss_type: 'B'
   gamma: 10.0
   max_capacity: 25
   Capacity_max_iter: 10000
 
 exp_params:
-  dataset: celeba
-  data_path: "../../shared/Data/"
+  dataset: cosmo
   img_size: 64
-  batch_size: 144 # Better to have a square number
+  batch_size: 1024 # Better to have a square number
   LR: 0.0005
-  weight_decay: 0.0
-  scheduler_gamma: 0.95
+  weight_decay: 0.0001
+  num_workers : 16
+  max_epochs: 100
 
 trainer_params:
   gpus: 1
-  max_nb_epochs: 50
-  max_epochs: 50
+  max_epochs: 100
 
 logging_params:
   save_dir: "logs/"
