@@ -38,7 +38,7 @@ class DummyData(Dataset):
         pass
     
     def __getitem__(self, index):
-        img = torch.rand(1, 512, 512)
+        img = torch.rand(1, 64, 64)
         return img, torch.randn((1, 1))
     
     def __len__(self):
