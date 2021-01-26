@@ -9,7 +9,7 @@ from torchvision import transforms
 import torchvision.utils as vutils
 from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
-from cosmo_data import CosmoData
+from cosmo_data import CosmoData, DummyData
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from vis import plt_slices, plt_power
@@ -162,7 +162,9 @@ class VAEXperiment(pl.LightningModule):
         elif self.params['dataset'] == 'cosmo':
             dataset = CosmoData(train='train')
 
-            # to do: create dummy dataset here
+        ### Create dummy dataset for test ###
+        elif self.params['dataset'] == 'dummy':
+            dataset = DummyData()
 
         else:
             raise ValueError('Undefined dataset type')
@@ -188,14 +190,21 @@ class VAEXperiment(pl.LightningModule):
                                                 drop_last=True)
             self.num_val_imgs = len(self.sample_dataloader)
 
-        # to do: create dummy dataset here
-
         elif self.params['dataset'] == 'cosmo':
             self.sample_dataloader = DataLoader(CosmoData(train='val'),
                                                 batch_size=self.params['batch_size'],
                                                 num_workers=self.params['num_workers'],
                                                 shuffle=False)
             self.num_val_imgs = len(self.sample_dataloader)
+        
+        ### Create dummy dataset for test ###
+        elif self.params['dataset'] == 'dummy':
+            self.sample_dataloader = DataLoader(DummyData(),
+                                                batch_size=self.params['batch_size'],
+                                                num_workers=self.params['num_workers'],
+                                                shuffle=False)
+            self.num_val_imgs = len(self.sample_dataloader)
+        
         else:
             raise ValueError('Undefined dataset type')
 
@@ -213,6 +222,8 @@ class VAEXperiment(pl.LightningModule):
                                             transforms.ToTensor(),
                                             SetRange])
         elif self.params['dataset'] == 'cosmo':
+            transform = None
+        elif self.params['dataset'] == 'dummy':
             transform = None
         else:
             raise ValueError('Undefined dataset type')
