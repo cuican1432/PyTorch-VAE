@@ -18,7 +18,7 @@ def batchify(batch):
 
 class CosmoData(Dataset):
     def __init__(self, train='train', load_every=5):
-        self.file_list = torch.load(f'/mnt/home/ecui/ceph/vae_learning/dataset/{train}_list.pkl')
+        self.file_list = torch.load(f'/mnt/home/ecui/ceph/vae_learning/dataset_exp/{train}_list.pkl')
         img_list = [torch.from_numpy(np.load(self.file_list[ind]['data'])) for ind in range(load_every)]
         label_list = [self.file_list[ind]['cosmo pharameter'] for ind in range(load_every)]
         self.load_every = load_every
