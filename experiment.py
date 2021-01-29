@@ -9,7 +9,7 @@ from torchvision import transforms
 import torchvision.utils as vutils
 from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
-from cosmo_data import CosmoData, DummyData
+from cosmo_data import CosmoData, DummyData, batchify
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from vis import plt_slices, plt_power
@@ -77,17 +77,17 @@ class VAEXperiment(pl.LightningModule):
         test_input = test_input.to(self.curr_device)
         test_label = test_label.to(self.curr_device)
         recons = self.model.generate(test_input, labels=test_label)
-        vutils.save_image(recons.data[:6],
-                          f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
-                          f"recons_{self.logger.name}_{self.current_epoch:04d}.png",
-                          normalize=True,
-                          nrow=6)
-
-        vutils.save_image(test_input.data[:6],
-                          f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
-                          f"real_img_{self.logger.name}_{self.current_epoch:04d}.png",
-                          normalize=True,
-                          nrow=6)
+        # vutils.save_image(recons.data[:6],
+        #                   f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
+        #                   f"recons_{self.logger.name}_{self.current_epoch:04d}.png",
+        #                   normalize=True,
+        #                   nrow=6)
+        #
+        # vutils.save_image(test_input.data[:6],
+        #                   f"{self.logger.save_dir}{self.logger.name}/version_{self.logger.version}/"
+        #                   f"real_img_{self.logger.name}_{self.current_epoch:04d}.png",
+        #                   normalize=True,
+        #                   nrow=6)
 
         f = plt_slices(test_input.data[:6], recons.data[:6], title=['original img', 'recon'])
         self.logger.experiment.add_figure(f'recon visuals', f, global_step=self.current_step)
@@ -160,9 +160,17 @@ class VAEXperiment(pl.LightningModule):
                              transform=transform,
                              download=False)
         elif self.params['dataset'] == 'cosmo':
-            dataset = CosmoData(train='train')
+            dataset = CosmoData(train='train', load_every=self.params['load_every'])
+            self.num_train_imgs = len(dataset)
+            return DataLoader(dataset,
+                              batch_size=self.params['batch_size'],
+                              num_workers=self.params['num_workers'],
+                              shuffle=True,
+                              drop_last=True,
+                              pin_memory=True,
+                              collate_fn=batchify)
 
-        ### Create dummy dataset for test ###
+        # Create dummy dataset for test
         elif self.params['dataset'] == 'dummy':
             dataset = DummyData()
 
@@ -191,20 +199,23 @@ class VAEXperiment(pl.LightningModule):
             self.num_val_imgs = len(self.sample_dataloader)
 
         elif self.params['dataset'] == 'cosmo':
-            self.sample_dataloader = DataLoader(CosmoData(train='val'),
+            self.sample_dataloader = DataLoader(CosmoData(train='val', load_every=self.params['load_every']),
                                                 batch_size=self.params['batch_size'],
                                                 num_workers=self.params['num_workers'],
-                                                shuffle=False)
+                                                shuffle=False,
+                                                pin_memory=True,
+                                                collate_fn=batchify
+                                                )
             self.num_val_imgs = len(self.sample_dataloader)
-        
-        ### Create dummy dataset for test ###
+
+        # Create dummy dataset for test
         elif self.params['dataset'] == 'dummy':
             self.sample_dataloader = DataLoader(DummyData(),
                                                 batch_size=self.params['batch_size'],
                                                 num_workers=self.params['num_workers'],
                                                 shuffle=False)
             self.num_val_imgs = len(self.sample_dataloader)
-        
+
         else:
             raise ValueError('Undefined dataset type')
 

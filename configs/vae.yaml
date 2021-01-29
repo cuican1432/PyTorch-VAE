@@ -5,17 +5,18 @@ model_params:
 
 exp_params:
   dataset: cosmo
-  img_size: 64
-  batch_size: 1024 # Better to have a square number
+  img_size: 4
+  batch_size: 16 # Better to have a square number
   LR: 0.0005
   weight_decay: 0.0001
-  num_workers : 16
+  num_workers : 8
   max_epochs: 100
+  load_every: 1
 
 trainer_params:
-  gpus: 1
+  gpus: 2
   max_epochs: 100
-#  accelerator: "ddp"
+  accelerator: "ddp"
 
 
 
