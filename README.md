@@ -1,3 +1,25 @@
+
+
+### Data 
+- size: 64 x 64, chunk from 512 x 512 to 64 x 64, used ALL 64 pieces for an image
+- padding: 0s 
+- amount: >200,000
+- model bottleneck size: 64 x 1
+
+### To Do
+- [X] solve IO issues (IO from ceph to computing nodes) 
+- [ ] complete the evaluation process - nn regression for cosmological parameters 
+- [ ] complete the evaluation process - compute fisher matrix 
+
+### Training Models 
+
+- [ ] VanillaVAE 
+- [ ] BetaVAE 
+
+
+Below is the original MD page: 
+
+-----
 <h1 align="center">
   <b>PyTorch VAE</b><br>
 </h1>
@@ -21,16 +43,16 @@ a radically different architecture (Ex. VQ VAE uses Residual layers and no Batch
 Here are the [results](https://github.com/AntixK/PyTorch-VAE/blob/master/README.md#--results) of each model.
 
 ### Requirements
-- Python >= 3.5
-- PyTorch >= 1.3
-- Pytorch Lightning >= 0.6.0 ([GitHub Repo](https://github.com/PyTorchLightning/pytorch-lightning/tree/deb1581e26b7547baf876b7a94361e60bb200d32))
+- Python
+- PyTorch
+- Pytorch Lightning
 - CUDA enabled computing device
 
 ### Installation
 ```
 $ git clone https://github.com/AntixK/PyTorch-VAE
 $ cd PyTorch-VAE
-$ pip install -r requirements.txt
+$ pip install -r requirements.txt (better to have the update version)
 ```
 
 ### Usage
