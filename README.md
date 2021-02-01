@@ -13,11 +13,28 @@
 
 ### Training Models 
 
-- [ ] VanillaVAE 
+- [X] VanillaVAE 
+<h2 align="center">
+  <b>Results</b><br>
+</h2>
+
+
+| Model                                                                  | Paper                                            |Reconstruction | Samples |
+|------------------------------------------------------------------------|--------------------------------------------------|---------------|---------|
+| VAE ([Code][vae_code], [Config][vae_config])                           |[Link](https://arxiv.org/abs/1312.6114)           |    ![][1-1]     | ![][1-2]  |
+
+
+
+[1-1]:https://i.imgur.com/w7tixfA.png
+[1-2]:https://i.imgur.com/QNOPQGO.png
+
 - [ ] BetaVAE 
 
 
-Below is the original MD page: 
+Below is the original Pytorch-VAE page:
+
+
+
 
 -----
 <h1 align="center">
