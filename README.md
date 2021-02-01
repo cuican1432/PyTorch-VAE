@@ -21,12 +21,16 @@
 
 | Model                                                                  | Paper                                            |Reconstruction | Samples |
 |------------------------------------------------------------------------|--------------------------------------------------|---------------|---------|
-| VAE ([Code][vae_code], [Config][vae_config])                           |[Link](https://arxiv.org/abs/1312.6114)           |    ![][1-1]     | ![][1-2]  |
+| VAE ([Code][vae_code_new], [Config][vae_config_new])                   |[Link](https://arxiv.org/abs/1312.6114)           |    ![][1-1]     | ![][1-2]  |
 
 
 
 [1-1]:https://i.imgur.com/w7tixfA.png
 [1-2]:https://i.imgur.com/QNOPQGO.png
+[vae_code_new]: https://github.com/cuican1432/vae_learning/blob/master/models/vanilla_vae.py
+[vae_config_new]: https://github.com/cuican1432/vae_learning/blob/master/configs/vae.yaml
+
+
 
 - [ ] BetaVAE 
 
