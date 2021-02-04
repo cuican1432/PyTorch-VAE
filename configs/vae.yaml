@@ -3,6 +3,13 @@ model_params:
   in_channels: 1
   latent_dim: 64
 
+reg_params:
+  name: 'NNReg'
+  input_dim: 64
+  output_dim: 5
+  drop_out: 0.0
+  hidden_dims: [100, 100, 100]
+
 exp_params:
   dataset: cosmo
   img_size: 64
@@ -13,12 +20,20 @@ exp_params:
   max_epochs: 10
   load_every: 1
 
+reg_exp_params:
+  dataset: dummy
+  img_size: 64
+  batch_size: 32 # Better to have a square number
+  LR: 0.00001
+  weight_decay: 0.0001
+  num_workers : 8
+  max_epochs: 10
+  load_every: 1
+
 trainer_params:
   gpus: 2
   max_epochs: 10
   accelerator: "ddp"
-
-
 
 logging_params:
   save_dir: "logs/"
