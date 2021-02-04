@@ -22,6 +22,7 @@ from .vq_vae import *
 from .betatc_vae import *
 from .dip_vae import *
 
+from .neural_net_reg import *
 
 # Aliases
 VAE = VanillaVAE
@@ -49,4 +50,5 @@ vae_models = {'HVAE':HVAE,
               'LogCoshVAE':LogCoshVAE,
               'VanillaVAE':VanillaVAE,
               'ConditionalVAE':ConditionalVAE,
-              'CategoricalVAE':CategoricalVAE}
+              'CategoricalVAE':CategoricalVAE,
+              'NNReg':NeuralNetReg}
