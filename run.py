@@ -1,6 +1,7 @@
 import yaml
 import argparse
 import numpy as np
+import glob.glob
 
 from models import *
 from experiment import VAEXperiment
@@ -49,16 +50,45 @@ runner = Trainer(default_root_dir=f"{tt_logger.save_dir}",
 print(f"======= Training {config['model_params']['name']} =======")
 runner.fit(experiment)
 
-# nn_reg part
-# nn_reg_model = vae_models[config['reg_params']['name']](**config['reg_params'])
-# nn_reg_experiment = RegExperiment(experiment.model.encode, nn_reg_model,
-#                                   config['reg_exp_params'])
+# NN_Reg part starts here...
 
-# nn_reg_runner = Trainer(default_root_dir=f"{tt_logger.save_dir}",
-#                         # logger=tt_logger,
-#                         val_check_interval=1.,
-#                         num_sanity_val_steps=5,
-#                         **config['trainer_params'])
+# Need to load the correct check point...
+# Haven't checked these lines since colab does not support glob.glob
 
-# print(f"======= Training {config['reg_params']['name']} =======")
-# nn_reg_runner.fit(nn_reg_experiment)
+# dir_path = config['logging_params']['save_dir'] + config['logging_params']['name']
+# versions = glob.glob(dir_path + '/*')
+# max_ver_num = max([int(i.split('_')[-1]) for i in versions])
+# ckpt_path = glob.glob(dir_path + '/version_{}/checkpoints/*'.format(max_ver_num))[0]
+
+ckpt_path = '../vae_learning_20210204ckpt/logs/VanillaVAE/version_1/checkpoints/epoch=28-step=138648.ckpt'
+experiment = VAEXperiment.load_from_checkpoint(ckpt_path, vae_model = model, params = config['exp_params'], map_location = 'cuda:0')
+
+nn_reg_tt_logger = TestTubeLogger(
+    save_dir=config['logging_params']['save_dir'],
+    name=config['logging_params']['nn_reg_name'],
+    debug=False,
+    create_git_tag=False,
+    # prefix='nn_reg_',
+)
+
+# experiment is not on cuda? why?? I've specified map_location in load_from_checkpoint???
+# print('experiment model is load on cuda: ', next(experiment.model.encoder.parameters()).is_cuda)
+
+# Therefore I have to assign them to cuda manually...
+experiment.model.encoder.cuda()
+experiment.model.fc_mu.cuda()
+experiment.model.fc_var.cuda()
+
+nn_reg_model = vae_models[config['reg_params']['name']](**config['reg_params'])
+nn_reg_experiment = RegExperiment(experiment.model.encode, nn_reg_model,
+                                  config['reg_exp_params'])
+
+nn_reg_runner = Trainer(default_root_dir=f"{nn_reg_tt_logger.save_dir}",
+                        logger=nn_reg_tt_logger,
+                        val_check_interval=1.,
+                        num_sanity_val_steps=5,
+                        **config['trainer_params'])
+
+print(f"======= Training {config['reg_params']['name']} =======")
+nn_reg_runner.fit(nn_reg_experiment)
+nn_reg_result = nn_reg_runner.test()
