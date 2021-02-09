@@ -44,12 +44,11 @@ class NeuralNetReg(BaseVAE):
         
         return 1 - sum_of_err / (y_sq_sum - (y_sum ** 2) / n)
 
-    def loss_function(self,
-                      *args,
-                      **kwargs) -> dict:
+    def train_loss_function(self,
+                            *args,
+                            **kwargs) -> dict:
         """
-        Computes the VAE loss function.
-        KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
+        Computes the RMSE and R2_score on all 5 cosmo params together
         :param args:
         :param kwargs:
         :return:
@@ -59,4 +58,41 @@ class NeuralNetReg(BaseVAE):
 
         rmse_loss = torch.sqrt(F.mse_loss(preds, input))
         r2_score = self.r2_score(preds, input)
-        return {'RMSE_loss': rmse_loss, 'R_squared_score': r2_score}
+        return {'loss': rmse_loss, 'R_squared_score': r2_score}
+    
+    def valid_loss_function(self,
+                            *args,
+                            **kwargs) -> dict:
+        """
+        Computes the RMSE and R2_score on all 5 cosmo params seperately
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        preds = {}
+        input = {}
+        preds['Om'] = args[0][:, 0]
+        preds['Ob2'] = args[0][:, 1]
+        preds['h'] = args[0][:, 2]
+        preds['ns'] = args[0][:, 3]
+        preds['s8'] = args[0][:, 4]
+        input['Om'] = args[1][:, 0]
+        input['Ob2'] = args[1][:, 1]
+        input['h'] = args[1][:, 2]
+        input['ns'] = args[1][:, 3]
+        input['s8'] = args[1][:, 4]
+
+        rmse_loss = torch.sqrt(F.mse_loss(args[0], args[1]))
+        rmse_Om = torch.sqrt(F.mse_loss(preds['Om'], input['Om']))
+        rmse_Ob2 = torch.sqrt(F.mse_loss(preds['Ob2'], input['Ob2']))
+        rmse_h = torch.sqrt(F.mse_loss(preds['h'], input['h']))
+        rmse_ns = torch.sqrt(F.mse_loss(preds['ns'], input['ns']))
+        rmse_s8 = torch.sqrt(F.mse_loss(preds['s8'], input['s8']))
+        r2_Om = self.r2_score(preds['Om'], input['Om'])
+        r2_Ob2 = self.r2_score(preds['Ob2'], input['Ob2'])
+        r2_h = self.r2_score(preds['h'], input['h'])
+        r2_ns = self.r2_score(preds['ns'], input['ns'])
+        r2_s8 = self.r2_score(preds['s8'], input['s8'])
+        return {'loss': rmse_loss,
+                'RMSE_Om': rmse_Om.item(), 'RMSE_Ob2': rmse_Ob2.item(), 'RMSE_h': rmse_h.item(), 'RMSE_ns': rmse_ns.item(), 'RMSE_s8': rmse_s8.item(),
+                'R_Squared_Om': r2_Om, 'R_Squared_Ob2': r2_Ob2, 'R_Squared_h': r2_h, 'R_Squared_ns': r2_ns, 'R_Squared_s8': r2_s8}
