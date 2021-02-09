@@ -62,7 +62,6 @@ class CosmoData(Dataset):
     def __len__(self):
         return len(self.file_list)
 
-
 # Add a Dummy Dataset for test###
 class DummyData(Dataset):
     def __init__(self):
@@ -70,7 +69,7 @@ class DummyData(Dataset):
 
     def __getitem__(self, index):
         img = torch.rand(1, 64, 64)
-        return img, torch.randn((1, 1))
+        return img, torch.randn(5)
 
     def __len__(self):
-        return 153 * 2000
+        return 5000
