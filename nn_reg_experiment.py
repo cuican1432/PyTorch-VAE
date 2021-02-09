@@ -14,7 +14,6 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from vis import plt_slices, plt_power
 
-
 class RegExperiment(pl.LightningModule):
 
     def __init__(self,
@@ -42,13 +41,14 @@ class RegExperiment(pl.LightningModule):
         input_imgs, labels = batch
         self.curr_device = input_imgs.device
 
-        results = self.forward(input_imgs, labels=labels)
-        train_loss = self.model.loss_function(*results,
-                                              M_N=self.params['batch_size'] / self.num_train_imgs,
-                                              optimizer_idx=optimizer_idx,
-                                              batch_idx=batch_idx)
+        vecs = self.vae_model(input_imgs)[0]
+        results = self.forward(vecs.detach(), labels=labels)
+        train_loss = self.model.train_loss_function(results, labels,
+                                                    M_N=self.params['batch_size'] / self.num_train_imgs,
+                                                    optimizer_idx=optimizer_idx,
+                                                    batch_idx=batch_idx)
 
-        self.logger.experiment.log({key: val.item() for key, val in train_loss.items()})
+        self.logger.experiment.log({(key if key == 'R_squared_score' else 'RMSE_loss'): val for key, val in train_loss.items()})
 
         return train_loss
 
@@ -56,17 +56,37 @@ class RegExperiment(pl.LightningModule):
         input_imgs, labels = batch
         self.curr_device = input_imgs.device
 
-        results = self.forward(input_imgs, labels=labels)
-        val_loss = self.model.loss_function(*results,
-                                            M_N=self.params['batch_size'] / self.num_val_imgs,
-                                            optimizer_idx=optimizer_idx,
-                                            batch_idx=batch_idx)
+        vecs = self.vae_model(input_imgs)[0]
+        results = self.forward(vecs.detach(), labels=labels)
+        val_loss = self.model.valid_loss_function(results, labels,
+                                                  M_N=self.params['batch_size'] / self.num_val_imgs,
+                                                  optimizer_idx=optimizer_idx,
+                                                  batch_idx=batch_idx)
 
         return val_loss
+    
+    def test_step(self, batch, batch_idx, optimizer_idx=0):
+        input_imgs, labels = batch
+        self.curr_device = input_imgs.device
+
+        vecs = self.vae_model(input_imgs)[0]
+        results = self.forward(vecs.detach(), labels=labels)
+        test_loss = self.model.valid_loss_function(results, labels,
+                                                   M_N=self.params['batch_size'] / self.num_val_imgs,
+                                                   optimizer_idx=optimizer_idx,
+                                                   batch_idx=batch_idx)
+        with open('logs/VanillaVAEReg/log.txt', 'a') as f:
+            f.write('{} {} {} {} {} {} {} {} {} {}'
+                    .format(test_loss['RMSE_Om'], test_loss['RMSE_Ob2'], test_loss['RMSE_h'], test_loss['RMSE_ns'], test_loss['RMSE_s8'],
+                            test_loss['R_Squared_Om'], test_loss['R_Squared_Ob2'], test_loss['R_Squared_h'], test_loss['R_Squared_ns'], test_loss['R_Squared_s8']))
+
+        return test_loss
 
     def on_validation_end(self, outputs):
-        avg_loss = torch.stack([x['R_squared_score'] for x in outputs]).mean()
+        avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
         tensorboard_logs = {'avg_val_loss': avg_loss}
+        # path = self.params['save_dir'] + self.params['name']
+        # print('on validation end: ', outputs)
         return {'val_loss': avg_loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
@@ -147,6 +167,43 @@ class RegExperiment(pl.LightningModule):
 
     @data_loader
     def val_dataloader(self):
+        transform = self.data_transforms()
+
+        if self.params['dataset'] == 'celeba':
+            self.sample_dataloader = DataLoader(CelebA(root=self.params['data_path'],
+                                                       split="test",
+                                                       transform=transform,
+                                                       download=False),
+                                                batch_size=144,
+                                                shuffle=True,
+                                                drop_last=True)
+            self.num_val_imgs = len(self.sample_dataloader)
+
+        elif self.params['dataset'] == 'cosmo':
+            self.sample_dataloader = DataLoader(CosmoData(train='val', load_every=self.params['load_every']),
+                                                batch_size=self.params['batch_size'],
+                                                num_workers=self.params['num_workers'],
+                                                shuffle=False,
+                                                pin_memory=True,
+                                                collate_fn=batchify
+                                                )
+            self.num_val_imgs = len(self.sample_dataloader)
+
+        # Create dummy dataset for test
+        elif self.params['dataset'] == 'dummy':
+            self.sample_dataloader = DataLoader(DummyData(),
+                                                batch_size=self.params['batch_size'],
+                                                num_workers=self.params['num_workers'],
+                                                shuffle=False)
+            self.num_val_imgs = len(self.sample_dataloader)
+
+        else:
+            raise ValueError('Undefined dataset type')
+
+        return self.sample_dataloader
+
+    @data_loader
+    def test_dataloader(self):
         transform = self.data_transforms()
 
         if self.params['dataset'] == 'celeba':
