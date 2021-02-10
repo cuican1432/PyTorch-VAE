@@ -21,7 +21,7 @@ exp_params:
   load_every: 1
 
 reg_exp_params:
-  dataset: dummy
+  dataset: cosmo
   img_size: 64
   batch_size: 32 # Better to have a square number
   LR: 0.00001
@@ -40,3 +40,4 @@ logging_params:
   name: "VanillaVAE"
   nn_reg_name: 'VanillaVAEReg'
   manual_seed: 1265
+  version: 22

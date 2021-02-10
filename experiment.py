@@ -160,7 +160,7 @@ class VAEXperiment(pl.LightningModule):
                              transform=transform,
                              download=False)
         elif self.params['dataset'] == 'cosmo':
-            dataset = CosmoData(train='train', load_every=self.params['load_every'])
+            dataset = CosmoData(train='train', load_every=self.params['load_every'], exp=self.params['exp'])
             self.num_train_imgs = len(dataset)
             return DataLoader(dataset,
                               batch_size=self.params['batch_size'],
@@ -199,7 +199,7 @@ class VAEXperiment(pl.LightningModule):
             self.num_val_imgs = len(self.sample_dataloader)
 
         elif self.params['dataset'] == 'cosmo':
-            self.sample_dataloader = DataLoader(CosmoData(train='val', load_every=self.params['load_every']),
+            self.sample_dataloader = DataLoader(CosmoData(train='val', load_every=self.params['load_every'], exp=self.params['exp']),
                                                 batch_size=self.params['batch_size'],
                                                 num_workers=self.params['num_workers'],
                                                 shuffle=False,

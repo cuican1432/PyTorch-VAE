@@ -1,11 +1,9 @@
 model_params:
-  name: 'InfoVAE'
+  name: 'BetaVAE'
   in_channels: 1
   latent_dim: 64
-  reg_weight: 110  # MMD weight
-  kernel_type: 'imq'
-  alpha: -9.0     # KLD weight
-  beta: 10.5      # Reconstruction weight
+  loss_type: 'H'
+  beta: 10.0
 
 reg_params:
   name: 'NNReg'
@@ -42,11 +40,8 @@ trainer_params:
 
 logging_params:
   save_dir: "logs/"
-  name: "InfoVAE"
-  nn_reg_name: 'InfoVAEReg'
+  name: "BetaVAE_B"
+  nn_reg_name: 'BetaVAEReg'
   manual_seed: 1265
   version: 22
-
-
-
 

@@ -17,8 +17,11 @@ def batchify(batch):
 
 
 class CosmoData(Dataset):
-    def __init__(self, train='train', load_every=5):
-        self.file_list = torch.load(f'/mnt/home/ecui/ceph/vae_learning/dataset_exp/{train}_list.pkl')
+    def __init__(self, train='train', load_every=5, exp=False):
+        if not exp:
+            self.file_list = torch.load(f'/mnt/home/ecui/ceph/vae_learning/dataset_exp/{train}_list.pkl')
+        else:
+            self.file_list = torch.load(f'/mnt/home/ecui/ceph/vae_learning/dataset/{train}_list.pkl')[:1000]
         img_list = [torch.from_numpy(np.load(self.file_list[ind]['data'])) for ind in range(load_every)]
         label_list = [self.file_list[ind]['cosmo pharameter'] for ind in range(load_every)]
         self.load_every = load_every
@@ -44,13 +47,13 @@ class CosmoData(Dataset):
             for item in list_:
                 res += [a.reshape(-1, 64, 64) for a in item]
             res_labels += [torch.from_numpy(labels[j]).repeat(8 * 8, 1)]
-        return torch.cat(res, axis=0).unsqueeze(1), torch.cat(res_labels, axis=0)
+        return torch.cat(res, axis=0).unsqueeze(1).float(), torch.cat(res_labels, axis=0).float()
 
     def __getitem__(self, index):
         group = index // self.load_every
         member = index % self.load_every
 
-        if member == 0:
+        if not member:
             true_index = [group * self.load_every + i for i in range(self.load_every)]
             img_list = [torch.from_numpy(np.load(self.file_list[ind]['data'])) for ind in true_index]
             label_list = [self.file_list[ind]['cosmo pharameter'] for ind in true_index]
@@ -61,6 +64,7 @@ class CosmoData(Dataset):
 
     def __len__(self):
         return len(self.file_list)
+
 
 # Add a Dummy Dataset for test###
 class DummyData(Dataset):

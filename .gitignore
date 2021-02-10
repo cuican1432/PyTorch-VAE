@@ -1,10 +1,10 @@
-
 data/
+dataset/
+dataset_exp/
 logs/
-
-VanillaVAE/version_0/
+sbatch_jobs/
 
 __pycache__/
 .ipynb_checkpoints/
 
-Run.ipynb
+*.ipynb

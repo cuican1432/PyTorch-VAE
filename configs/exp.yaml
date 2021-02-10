@@ -1,11 +1,7 @@
 model_params:
-  name: 'InfoVAE'
+  name: 'VanillaVAE'
   in_channels: 1
   latent_dim: 64
-  reg_weight: 110  # MMD weight
-  kernel_type: 'imq'
-  alpha: -9.0     # KLD weight
-  beta: 10.5      # Reconstruction weight
 
 reg_params:
   name: 'NNReg'
@@ -17,36 +13,33 @@ reg_params:
 exp_params:
   dataset: cosmo
   img_size: 64
-  batch_size: 32 # Better to have a square number
+  batch_size: 8 # Better to have a square number
   LR: 0.0005
   weight_decay: 0.0001
-  num_workers : 8
-  max_epochs: 10
+  num_workers : 1
+  max_epochs: 1
   load_every: 1
-
+  exp: 1 # Load from ceph if 1 else load from /scratch
 
 reg_exp_params:
   dataset: cosmo
   img_size: 64
-  batch_size: 32 # Better to have a square number
+  batch_size: 8 # Better to have a square number
   LR: 0.00001
   weight_decay: 0.0001
-  num_workers : 8
+  num_workers : 2
   max_epochs: 10
   load_every: 1
+  exp: 1 # Load from ceph if 1 else load from /scratch
 
 trainer_params:
-  gpus: 2
-  max_epochs: 10
-  accelerator: "ddp"
+  gpus: 1
+  max_epochs: 1
+
 
 logging_params:
   save_dir: "logs/"
-  name: "InfoVAE"
-  nn_reg_name: 'InfoVAEReg'
+  name: "VanillaVAE"
+  nn_reg_name: 'VanillaVAEReg'
   manual_seed: 1265
-  version: 22
-
-
-
-
+  version: 25 # Need to define version manually and easy for regression

@@ -4,6 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from .types_ import *
 
+
 # from sklearn.metrics import r2_score
 
 class NeuralNetReg(BaseVAE):
@@ -41,8 +42,7 @@ class NeuralNetReg(BaseVAE):
         sum_of_err = torch.sum(torch.pow(y_pred - y, 2)).item()
         y_sum = torch.sum(y).item()
         y_sq_sum = torch.sum(torch.pow(y, 2)).item()
-        
-        return 1 - sum_of_err / (y_sq_sum - (y_sum ** 2) / n)
+        return 1 - sum_of_err / (y_sq_sum - (y_sum ** 2) / n + 1e-8)
 
     def train_loss_function(self,
                             *args,
@@ -59,7 +59,7 @@ class NeuralNetReg(BaseVAE):
         rmse_loss = torch.sqrt(F.mse_loss(preds, input))
         r2_score = self.r2_score(preds, input)
         return {'loss': rmse_loss, 'R_squared_score': r2_score}
-    
+
     def valid_loss_function(self,
                             *args,
                             **kwargs) -> dict:
@@ -94,5 +94,7 @@ class NeuralNetReg(BaseVAE):
         r2_ns = self.r2_score(preds['ns'], input['ns'])
         r2_s8 = self.r2_score(preds['s8'], input['s8'])
         return {'loss': rmse_loss,
-                'RMSE_Om': rmse_Om.item(), 'RMSE_Ob2': rmse_Ob2.item(), 'RMSE_h': rmse_h.item(), 'RMSE_ns': rmse_ns.item(), 'RMSE_s8': rmse_s8.item(),
-                'R_Squared_Om': r2_Om, 'R_Squared_Ob2': r2_Ob2, 'R_Squared_h': r2_h, 'R_Squared_ns': r2_ns, 'R_Squared_s8': r2_s8}
+                'RMSE_Om': rmse_Om.item(), 'RMSE_Ob2': rmse_Ob2.item(), 'RMSE_h': rmse_h.item(),
+                'RMSE_ns': rmse_ns.item(), 'RMSE_s8': rmse_s8.item(),
+                'R_Squared_Om': r2_Om, 'R_Squared_Ob2': r2_Ob2, 'R_Squared_h': r2_h, 'R_Squared_ns': r2_ns,
+                'R_Squared_s8': r2_s8}
