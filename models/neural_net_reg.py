@@ -37,12 +37,12 @@ class NeuralNetReg(BaseVAE):
         output = self.model(input)
         return self.final_layer(output)
 
-    def r2_score(self, y_pred, y):
+    def r2_score(self, y, y_pred):
         n = y.shape[0]
         sum_of_err = torch.sum(torch.pow(y_pred - y, 2)).item()
         y_sum = torch.sum(y).item()
         y_sq_sum = torch.sum(torch.pow(y, 2)).item()
-        return 1 - sum_of_err / (y_sq_sum - (y_sum ** 2) / n + 1e-8)
+        return 1 - sum_of_err / (y_sq_sum - (y_sum ** 2) / n)
 
     def train_loss_function(self,
                             *args,
@@ -57,7 +57,7 @@ class NeuralNetReg(BaseVAE):
         input = args[1]
 
         rmse_loss = torch.sqrt(F.mse_loss(preds, input))
-        r2_score = self.r2_score(preds, input)
+        r2_score = self.r2_score(input, preds)
         return {'loss': rmse_loss, 'R_squared_score': r2_score}
 
     def valid_loss_function(self,
@@ -88,11 +88,11 @@ class NeuralNetReg(BaseVAE):
         rmse_h = torch.sqrt(F.mse_loss(preds['h'], input['h']))
         rmse_ns = torch.sqrt(F.mse_loss(preds['ns'], input['ns']))
         rmse_s8 = torch.sqrt(F.mse_loss(preds['s8'], input['s8']))
-        r2_Om = self.r2_score(preds['Om'], input['Om'])
-        r2_Ob2 = self.r2_score(preds['Ob2'], input['Ob2'])
-        r2_h = self.r2_score(preds['h'], input['h'])
-        r2_ns = self.r2_score(preds['ns'], input['ns'])
-        r2_s8 = self.r2_score(preds['s8'], input['s8'])
+        r2_Om = self.r2_score(input['Om'], preds['Om'])
+        r2_Ob2 = self.r2_score(input['Ob2'], preds['Ob2'])
+        r2_h = self.r2_score(input['h'], preds['h'])
+        r2_ns = self.r2_score(input['ns'], preds['ns'])
+        r2_s8 = self.r2_score(input['s8'], preds['s8'])
         return {'loss': rmse_loss,
                 'RMSE_Om': rmse_Om.item(), 'RMSE_Ob2': rmse_Ob2.item(), 'RMSE_h': rmse_h.item(),
                 'RMSE_ns': rmse_ns.item(), 'RMSE_s8': rmse_s8.item(),
