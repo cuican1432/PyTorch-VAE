@@ -47,7 +47,6 @@ model = vae_models[config['model_params']['name']](**config['model_params'])
 experiment = VAEXperiment(model,
                           config['exp_params'])
 
-
 runner = Trainer(default_root_dir=f"{tt_logger.save_dir}",
                  logger=tt_logger,
                  val_check_interval=1.,
@@ -86,8 +85,10 @@ nn_reg_runner = Trainer(default_root_dir=f"{nn_reg_tt_logger.save_dir}",
 
 print(f"======= Training {config['reg_params']['name']} =======")
 nn_reg_runner.fit(nn_reg_experiment)
-test_loss = nn_reg_runner.test()
+dir_path = glob.glob(
+    f"{config['logging_params']['save_dir']}/{config['logging_params']['name']}/version_{config['logging_params']['version']}/nn_reg/checkpoints/*")[
+    0]
+test_loss = nn_reg_runner.test(ckpt_path=dir_path)
 
 with open(f'{dir_path}/nn_log.json', 'w') as fp:
     json.dump(test_loss[0], fp)
-
